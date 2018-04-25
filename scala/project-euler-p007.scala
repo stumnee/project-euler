@@ -9,23 +9,17 @@
   *
   */
 
-
-var primes = scala.collection.mutable.ListBuffer[Long](2)
-
-def isPrime(x: Long): Boolean = {
-  var isOk = true
-
-  primes.foreach(p => if (x % p == 0) isOk = false)
-  if (isOk) {
-    primes += x
-  }
-  isOk
-}
+// Change the data type Int to Long according to the nth value
+var primes = scala.collection.mutable.ListBuffer[Int](2)
 
 var i = 3
 
-while (primes.size < 10001) {
-  isPrime(i)
+val nth = 10001
+
+while (primes.size < nth) {
+  if (primes.forall(p => i % p != 0)) {
+    primes += i
+  }
   i = i + 2
 }
 println(primes.last)

@@ -10,13 +10,7 @@
 var primes = scala.collection.mutable.ListBuffer[Long](2)
 
 def isPrime(x: Long): Boolean = {
-  var isOk = true
-
-  primes.foreach(p => if (x % p == 0) isOk = false)
-  if (isOk) {
-    primes += x
-  }
-  isOk
+  primes.forall(p => x % p != 0)
 }
 
 var n = 600851475143L
@@ -24,8 +18,10 @@ var i = 3
 
 while (i <= n) {
   if (isPrime(i) && n % i == 0) {
-    print(i + " ")
+    primes += i
     n = n / i
   }
   i = i + 2
 }
+
+println(primes.last)
