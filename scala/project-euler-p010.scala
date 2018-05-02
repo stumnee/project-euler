@@ -14,8 +14,6 @@ var primes = scala.collection.mutable.ListBuffer[Int](3)
 var max = 2000000
 var i = 5
 
-val t0 = System.currentTimeMillis()
-
 while (i < max) {
   if (primes.forall(p => i % p != 0)) {
     primes += i
@@ -34,6 +32,3 @@ println("Sum of primes: " + sum)
 
 println("Total Primes: " + primes.size)
 
-val t1 = System.currentTimeMillis()
-
-println("Elapsed time: " + (t1 - t0) + "ms")
