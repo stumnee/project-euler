@@ -52,3 +52,11 @@ for (i <- 1 to 1000) {
 }
 
 println(count)
+/*
+21124
+
+real    0m1.353s
+user    0m1.199s
+sys     0m0.153s
+
+ */
