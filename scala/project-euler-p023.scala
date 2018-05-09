@@ -44,10 +44,16 @@ while (n < min * 2) {
   n += 1
 }
 
+var abundantNumbersMap = collection.immutable.Map[Int, Int]()
+
+abundantNumbers.foreach { x => abundantNumbersMap += (x -> 1) }
+
+
 while (n < max) {
   var (i, isOk) = (0, true)
+
   while (isOk && abundantNumbers(i) <= n / 2) {
-    if (abundantNumbers.indexOf(n - abundantNumbers(i)) > -1) {
+    if (abundantNumbersMap isDefinedAt (n - abundantNumbers(i))) {
       isOk = false
     }
     i += 1
@@ -56,15 +62,16 @@ while (n < max) {
     sum += n
   }
   n += 1
+
 }
 println(sum)
 /*
-TODO: takes too long!!!!
 
 4179871
 
-real    3m34.519s
-user    3m32.831s
-sys     0m1.004s
+real    0m6.436s
+user    0m5.901s
+sys     0m0.154s
+
 
  */
