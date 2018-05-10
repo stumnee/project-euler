@@ -23,3 +23,12 @@ while (primes.size < nth) {
   i = i + 2
 }
 println(primes.last)
+
+/*
+104743
+
+real    0m1.494s
+user    0m1.345s
+sys     0m0.121s
+
+ */

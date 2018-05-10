@@ -25,3 +25,11 @@ while (i <= n) {
 }
 
 println(primes.last)
+/*
+6857
+
+real    0m1.242s
+user    0m1.048s
+sys     0m0.132s
+
+ */
