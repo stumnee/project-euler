@@ -11,13 +11,13 @@
   **/
 
 
-var s = ""
+var s = new StringBuilder()
 
 val max = 1000000
 
 var i = 1
 while (s.length <= max) {
-  s += i
+  s.append(i)
   i += 1
 }
 
@@ -27,9 +27,8 @@ var n = 1
 
 while (n < max) {
   n *= 10
-  product *= (s(n - 1) - '0').toInt
+  product *= (s.charAt(n - 1) - '0')
 }
-
 
 
 println(product)
@@ -38,8 +37,9 @@ println(product)
 
 210
 
-real    0m53.079s
-user    1m2.595s
-sys     0m1.773s
+real    0m1.192s
+user    0m1.108s
+sys     0m0.119s
+
 
  */
