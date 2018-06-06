@@ -22,20 +22,17 @@
   * https://projecteuler.net/problem=58
   **/
 
-val seedMax = 1000000000
 
-var primes = Array.fill[Boolean](seedMax)(true)
 
-// Generate prime numbers up to Max
-// using the sieve of Eratosthenes
-for (i <- 2 until primes.length - 1) {
-  if (primes(i)) {
-    var j = i.toLong * i
-    while (j < seedMax) {
-      primes(j.toInt) = false
-      j += i
+def isPrime(n: Int): Boolean = {
+  // diagonal numbers are all odd numbers,
+  // so start with 3
+  for (i <- 3 to Math.sqrt(n).toInt by 2) {
+    if (n % i == 0) {
+      return false
     }
   }
+  true
 }
 
 
@@ -43,10 +40,13 @@ var numPrimes = 0f
 var size = 1
 
 do {
+  // square grows by 2
   size += 2
+
   var corner = (size - 2) * (size - 2) + size - 2 + 1 //topRight
-  for (i <- 0 to 3) {
-    if (primes(corner)) {
+
+  for (_ <- 0 to 3) {
+    if (isPrime(corner)) {
       numPrimes += 1
     }
     corner += size - 1
@@ -57,13 +57,10 @@ do {
 println(size)
 
 /*
-TODO: Requires too much heap memory
-
-time scala -J-Xmx2g scala/project-euler-p058.scala
 26241
 
-real    0m13.353s
-user    0m13.235s
-sys     0m0.544s
+real    0m1.280s
+user    0m1.213s
+sys     0m0.114s
 
  */
