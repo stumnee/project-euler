@@ -10,21 +10,29 @@
 
 val passcode = io.Source.fromFile("p079_keylog.txt").mkString.split("\n")
 
-passcode.foreach(x=>println(x))
-
-def isValid(x: Long): Boolean = {
-  passcode.forall{ code =>
-    val s = x.toString
-    code.forall{ ch=>
-      s.indexOf(ch) > -1
+def isValid(s: String): Boolean = {
+  passcode.forall { code =>
+    var lastIdx = 0
+    code.forall { ch=>
+      lastIdx = s.indexOf(ch, lastIdx)
+      lastIdx > -1
     }
   }
 }
 
-var i = 1000L
+var i = 1L
 
-while (!isValid(i)) {
+while (!isValid(i.toString)) {
   i += 1
 }
 
 println(i)
+
+/*
+73162890
+
+real    0m5.775s
+user    0m5.781s
+sys     0m0.190s
+
+ */
