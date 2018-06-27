@@ -12,22 +12,56 @@
 
 val data = io.Source.fromFile("p096_sudoku.txt").mkString.split("\n").filter(!_.contains("Grid"))
 
-val allDigits = 1 to 9
-
-def comb(v: Vector[Vector[Int]]): IndexedSeq[Vector[Vector[Int]]] = {
-  if (v.length < 2) {
-    return IndexedSeq(v)
-  }
-  (0 until v.length - 1).flatMap { idx =>
-    (comb(v.slice(idx + 1, v.length)) :+ null).map { sV=>
-      if (sV == null)
-        Vector(v(idx))
-      else
-        v(idx) +: sV
+def allCombinations(v: Vector[Vector[Int]]): IndexedSeq[Vector[Vector[Int]]] = {
+  v.indices.flatMap { idx =>
+    if (v.length == idx + 1) {
+      IndexedSeq(Vector(v(idx)))
+    } else {
+      allCombinations(v.slice(idx + 1, v.length)).map { sV=>
+        if (sV == null)
+          Vector(v(idx))
+        else
+          v(idx) +: sV
+      }
     }
   }
 }
 
+def filterByMultiples(cell: Vector[Int], values: Array[Vector[Int]]): Vector[Int] = {
+  val res = allCombinations(values.filter(_.length > 1).toVector).filter{ v=>
+    v.size == v.flatten.distinct.size && v.size < values.length
+  }.groupBy(_.flatten.distinct).mapValues(_(0))
+
+  val len = cell.length
+  var newCell = cell
+  res.foreach { dd =>
+    if (newCell.length == len && len > 1 && dd._2.indexOf(cell) == -1) {
+      newCell = cell.filter{ digit => dd._1.indexOf(digit) == -1}
+    }
+  }
+  newCell
+}
+
+def filterBySingleValue(cell: Vector[Int], values: Array[Vector[Int]]): Vector[Int] = {
+  var newCell = cell
+  if (cell.length > 1) {
+    // by row
+    newCell = cell.filter { digit =>
+      values.map(d =>
+        if (d.length == 1) d.head else 0
+      ).indexOf(digit) == -1
+    }
+  }
+  newCell
+}
+
+def boxValues(grid: Array[Array[Vector[Int]]], y: Int, x: Int): Array[Vector[Int]] = {
+  (y / 3 * 3 until y / 3 * 3 + 3).flatMap { boxY =>
+    (x / 3 * 3 until x / 3 * 3 + 3).map { boxX =>
+      grid(boxY)(boxX)
+    }
+  }.toArray
+}
 def solve(grid: Array[Array[Vector[Int]]]) = {
 
   var changes = 1
@@ -36,160 +70,125 @@ def solve(grid: Array[Array[Vector[Int]]]) = {
     changes = 0
     for (y <- 0 until 9) {
       for (x <- 0 until 9) {
-        val cell = grid(y)(x)
-        val oldLength = cell.length
-
         if (grid(y)(x).length > 1) {
-          // by row
-          grid(y)(x) = grid(y)(x).filter { digit =>
-            grid(y).map(d =>
-              if (d.length == 1) d.head else 0
-            ).indexOf(digit) == -1
-          }
-        }
+          val len = grid(y)(x).length
+          // Row
+          grid(y)(x) = filterBySingleValue(grid(y)(x), grid(y))
 
-        if (grid(y)(x).length > 1) {
-          // by column
-          grid(y)(x) = grid(y)(x).filter { digit =>
-            grid.map(_ (x)).map(d =>
-              if (d.length == 1) d.head else 0
-            ).indexOf(digit) == -1
-          }
-        }
+          // Column
+          grid(y)(x) = filterBySingleValue(grid(y)(x), grid.map(_(x)))
 
+          // Box 3x3
+          grid(y)(x) = filterBySingleValue(grid(y)(x), boxValues(grid, y, x))
 
-        if (grid(y)(x).length > 1) {
-          // by 3x3 box
-          grid(y)(x) = grid(y)(x).filter { digit =>
-            (y / 3 * 3 until y / 3 * 3 + 3).flatMap { boxY =>
-              (x / 3 * 3 until x / 3 * 3 + 3).map { boxX =>
-                if (grid(boxY)(boxX).length == 1) grid(boxY)(boxX).head else 0
-              }
-            }.indexOf(digit) == -1
-          }
-        }
+          // Row Multiple values
+          grid(y)(x) = filterByMultiples(grid(y)(x), grid(y))
 
-        if (grid(y)(x).length > 1) {
-          // by 3x3 box :: multiple numbers check
-          /*
-            using 58 occurred twice,
-            so no more 5 or 8
+          // Column Multiple values
+          grid(y)(x) = filterByMultiples(grid(y)(x), grid.map(_(x)))
 
-            58   7  9         58   7   9
-             4  58  2   =>     4   58  2
-            581  3  6          1   3   6
-            */
-//          val dupes = (y / 3 * 3 until y / 3 * 3 + 3).flatMap { boxY =>
-//            (x / 3 * 3 until x / 3 * 3 + 3).map { boxX =>
-//              grid(boxY)(boxX).sorted
-//            }
-//          }.filter(_.length > 1).groupBy(i=>i).mapValues(_.size).filter(e=>e._1.size == e._2).keys
-//
-//
-//          dupes.foreach{ dd=>
-//            if (grid(y)(x) != dd) { // no exact match
-//              grid(y)(x) = grid(y)(x).filter{ digit => dd.indexOf(digit) == -1}
-//            }
-//
-//          }
-
-          val boxVals = (y / 3 * 3 until y / 3 * 3 + 3).flatMap { boxY =>
-                        (x / 3 * 3 until x / 3 * 3 + 3).map { boxX =>
-                          grid(boxY)(boxX).sorted
-                        }
-                      }.filter(_.length > 1)
+          // Box 3x3 Multiple values
+          grid(y)(x) = filterByMultiples(grid(y)(x), boxValues(grid, y, x))
 
 
-          val res = comb(boxVals.toVector).filter{v=>
-            v.size == v.flatten.distinct.size && v.size < boxVals.length
-          }.groupBy(_.flatten.distinct).mapValues(_(0))
-
-          res.foreach { dd=>
-            if (grid(y)(x).length > 1 && dd._2.indexOf(grid(y)(x)) == -1) {
-              grid(y)(x) = grid(y)(x).filter{ digit => dd._1.indexOf(digit) == -1}
-            }
+          if (len != grid(y)(x).length) {
+            changes += 1
           }
         }
 
 
-          // by row  :: multiple numbers check
-          /*
-            using 58 occurred twice,
-            so no more 5 or 8
-
-            58  2  58  4  598  1  3   =>  58  2  58  4  9  1  3
-            */
-
-          val rowVals = grid(y).filter(_.length > 1)
-
-          val res = comb(rowVals.toVector).filter{v=>
-            v.size == v.flatten.distinct.size && v.size < rowVals.length
-          }.groupBy(_.flatten.distinct).mapValues(_(0))
-
-        if (y==4)  {
-          println("=======", res, rowVals.mkString, "===", comb(rowVals.toVector).indexOf(Vector(4,7)))
-          println()
-          comb(rowVals.toVector).foreach{ff=>
-            println(ff)
-          }
-          println()
-        }
-          res.foreach { dd=>
-            if (grid(y)(x).length > 1 && dd._2.indexOf(grid(y)(x)) == -1) {
-              grid(y)(x) = grid(y)(x).filter{ digit => dd._1.indexOf(digit) == -1}
-            }
-          }
-
-//          val dupes = grid(y).filter(_.length > 1).groupBy(i=>i).mapValues(_.length).filter(e=>e._1.size == e._2).keys
-//
-//
-//          dupes.foreach{ dd=>
-//            if (grid(y)(x) != dd) { // no exact match
-//              grid(y)(x) = grid(y)(x).filter{ digit => dd.indexOf(digit) == -1}
-//            }
-//
-//          }
-
-        if (grid(y)(x).length > 1) {
-
-          val colVals = grid.map(_ (x)).filter(_.length > 1)
-
-          val res = comb(colVals.toVector).filter{v=>
-            v.size == v.flatten.distinct.size && v.size < colVals.length
-          }.groupBy(_.flatten.distinct).mapValues(_(0))
-
-          //println(x + "====" + res)
-          res.foreach { dd=>
-            if (grid(y)(x).length > 1 && dd._2.indexOf(grid(y)(x)) == -1) {
-              grid(y)(x) = grid(y)(x).filter{ digit => dd._1.indexOf(digit) == -1}
-            }
-          }
-
-        }
-
-
-        if (oldLength != grid(y)(x).length) {
-          changes += 1
-        }
       }
     }
-    grid.foreach(y=>println(y.mkString))
-    println(s"changes $changes\n")
+//    grid.foreach(y=>println(y.mkString))
+//    println(s"changes $changes\n")
   }
   grid
 }
+def isErroneous(grid: Array[Array[Vector[Int]]]): Boolean = {
+  grid.flatten.count(_.isEmpty) > 0
+}
+def isIncomplete(grid: Array[Array[Vector[Int]]]): Boolean = {
+  grid.flatten.count(_.length > 1) > 0
+}
+def testAndSolve(grid: Array[Array[Vector[Int]]]): Array[Array[Vector[Int]]] = {
+  var results = grid
+
+
+
+  if (!isErroneous(grid) && isIncomplete(grid)) {
+
+    val incompleteCells = (0 until 9).flatMap { boxY =>
+      (0 until 9).map { boxX =>
+        (boxY, boxX) -> grid(boxY)(boxX)
+      }
+    }.filter(e => e._2.length > 1)
+
+    if (incompleteCells.nonEmpty) {
+      val ((y: Int, x: Int), possibleValues: Vector[Int]) = incompleteCells.minBy(_._2.length)
+
+      val it = possibleValues.iterator
+
+      var testResults: Array[Array[Vector[Int]]] = null
+      do {
+
+        // deep copy
+        testResults = results.map(_.map(cell=>cell))
+
+        testResults(y)(x) = Vector(it.next())
+
+        testResults = testAndSolve(solve(testResults))
+
+      } while (it.hasNext && isErroneous(testResults))
+
+      results = testResults
+    }
+  }
+  // Complete
+  results
+}
 
 var count = 0
-data.grouped(9).foreach { grid=>
-  if (count == 5) {
+var sum = 0
 
-    val results = solve(grid.map(_.toCharArray.map(_.asDigit).map { x =>
-      if (x == 0)
-        allDigits.toVector
-      else
-        Vector(x)
-    }))
-  }
-  count += 1
-
+val grids = data.grouped(9).map { grid =>
+  grid.map(_.toCharArray.map(_.asDigit).map { x =>
+    if (x == 0)
+      (1 to 9).toVector
+    else
+      Vector(x)
+  })
 }
+grids.foreach{ grid=>
+  val results = testAndSolve(solve(grid))
+
+  println(s"Sudoku ${count + 1}")
+  if (isIncomplete(results)) {
+    println("Incomplete")
+    results.foreach { row=>
+      println(row.mkString)
+    }
+  } else {
+    results.foreach { row=>
+      println(row.map(_(0) + " ").mkString)
+    }
+
+    val check = results.map{ row=>
+      row.map(_(0)).distinct.length
+    }.sum
+
+    if (check == 81) {
+      println("Verified")
+    }
+
+    println(results.head(0).head * 100 + results.head(1).head * 10 + results.head(2).head)
+
+    sum += results.head(0).head * 100 + results.head(1).head * 10 + results.head(2).head
+  }
+  println("\n\n")
+  count += 1
+}
+
+println(s"Sum = $sum")
+
+
+
