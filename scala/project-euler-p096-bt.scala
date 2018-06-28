@@ -30,50 +30,74 @@ class Sudoku(r: Vector[Vector[Int]]) {
   def update(absIdx: Int, newValue: Int): Sudoku = {
     update(absIdx / 9, absIdx % 9, newValue)
   }
+
+  /**
+    * Deep copy with a new value
+    * @param r
+    * @param c
+    * @param newValue
+    * @return
+    */
   def update(r: Int, c: Int, newValue: Int): Sudoku = {
     new Sudoku(rows.zipWithIndex.map{ case (row, rowIdx) =>
+      if (rowIdx != r) {
+        row
+      } else {
         row.zipWithIndex.map { case (value, colIdx) =>
-            if (rowIdx == r && colIdx == c)
-              newValue
-            else
-              value
+          if (rowIdx == r && colIdx == c)
+            newValue
+          else
+            value
         }
+      }
     })
   }
 
   def testDistinct(coll: Vector[Int]): Boolean = {
-    val nonZeroColl = coll.filter(_ > 0)
-    nonZeroColl.distinct.length == nonZeroColl.length
+    // 10s Slower method commented out
+    /*
+      val nonZeroColl = coll.filter(_ > 0)
+      nonZeroColl.distinct.length == nonZeroColl.length
+     */
+
+    val digits = Array(0,0,0,0,0,0,0,0,0,0)
+    for (i<-coll.indices) {
+      if (coll(i) > 0 && digits(coll(i)) != 0) {
+        return false
+      } else {
+        digits(coll(i)) = 1
+      }
+    }
+    true
   }
 
-  def testLocalized(absIdx: Int) = {
-    val (r, c) = (absIdx / 9, absIdx % 9)
-    val rowTest = testDistinct(rows(r))
-    val colTest = testDistinct(rows.map(_(c)))
-    val boxTest = (r / 3 to r / 3 + 2).map{rowIdx=>
-      testDistinct(rows(rowIdx).slice(c / 3, c / 3 + 2))
-      }.forall(_ == true)
+  def testLocalized(rowIdx: Int, colIdx: Int) = {
+    (testDistinct(rows(rowIdx)) &&
 
-    rowTest && colTest && boxTest
+    testDistinct(rows.map(_(colIdx))) &&
+
+    testDistinct((rowIdx / 3 * 3 to rowIdx / 3 * 3 + 2).flatMap{rowIdx=>
+      rows(rowIdx).slice(colIdx / 3 * 3, colIdx / 3 * 3 + 3)
+      }.toVector))
+
   }
   def test: Boolean = {
 
 
-    val rowTest = rows.map (testDistinct(_)).forall(_ == true)
+    (rows.map (testDistinct(_)).forall(_ == true) &&
 
-    val colTest = rows.indices.map { colIdx =>
+    rows.indices.map { colIdx =>
       testDistinct(rows.map(_(colIdx)))
-    }.forall(_ == true)
+    }.forall(_ == true) &&
 
-    val boxTest = rows.grouped(3).map{rowGroup=>
+    rows.grouped(3).map{rowGroup=>
       (0 to 2).map { colGroupIdx=>
         testDistinct(rowGroup.flatMap{row=>
           row.slice(colGroupIdx * 3, colGroupIdx * 3 + 3)
         })
       }.forall(_ == true)
-    }.forall(_ == true)
+    }.forall(_ == true))
 
-    rowTest && colTest && boxTest
   }
 
   override def toString: String = {
@@ -91,21 +115,25 @@ def solveRecursively(puzzle: Sudoku, absIdx: Int = 0): Sudoku = {
   var newAbsIdx = absIdx
   var updatedPuzzle: Sudoku = puzzle
 
-  if (updatedPuzzle.test) {
     while (puzzle.valueAt(newAbsIdx) != 0) {
       newAbsIdx += 1
     }
 
     if (newAbsIdx < 81) {
+      val (rowIdx, colIdx) = (newAbsIdx / 9, newAbsIdx % 9)
       val it = (1 to 9).iterator
       do {
-        updatedPuzzle = puzzle.update(newAbsIdx, it.next())
+        do {
+          updatedPuzzle = puzzle.update(rowIdx, colIdx, it.next())
+        } while (it.hasNext && !updatedPuzzle.testLocalized(rowIdx, colIdx))
 
-        updatedPuzzle = solveRecursively(updatedPuzzle, newAbsIdx + 1)
+        if (updatedPuzzle.testLocalized(rowIdx, colIdx)) {
+          updatedPuzzle = solveRecursively(updatedPuzzle, newAbsIdx + 1)
+        }
 
       } while (it.hasNext && !updatedPuzzle.test)
     }
-  }
+
   updatedPuzzle
 }
 
@@ -115,16 +143,18 @@ for (i <- 0 to 49) {
   var solution = solveRecursively(puzzles(i))
   sum += solution.valueAt(0) * 100 + solution.valueAt(1) * 10 + solution.valueAt(2)
   solved += 1
-  println(s"puzzle $i solved")
+  println(solution)
+  println(s"puzzle ${i + 1} solved")
 }
 println(sum)
-
 /*
 
 24702
 
-real    7m51.428s
-user    8m7.579s
-sys     0m3.940s
+real    0m14.458s
+user    0m17.110s
+sys     0m0.302s
+
 
  */
+
