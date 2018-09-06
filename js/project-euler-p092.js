@@ -1,24 +1,23 @@
-var chains = new Map()
+const chain = new Map()
 
-chains.set(1,1)
-chains.set(89, 89)
+chain.set(1,1).set(89, 89)
 
 var max = 10000000
 
 function getSq(n){
 	var s = 0
 	while (n > 0) {
-		var d = n % 10
+		let d = n % 10
 		s += d * d
 		n = Math.floor(n / 10)
 	}
 	return s
 }
-function setChain(n){
-	var ch = chains.get(n)
+let setChain = (n) => {
+	var ch = chain.get(n)
 	if (!ch) {
 		ch = setChain(getSq(n))
-		chains.set(n, ch)
+		chain.set(n, ch)
 	}
 	return ch
 }
@@ -30,9 +29,10 @@ for (var n = 2; n < max; n++) {
 
 var count = 0
 
-chains.forEach(function(v, k, m){
+chain.forEach((v, k, m) => {
 	if (v == 89) {
 		count++
 	}
 })
+
 console.log(count)
