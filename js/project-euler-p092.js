@@ -3,7 +3,7 @@ var chains = new Map()
 chains.set(1,1)
 chains.set(89, 89)
 
-var max = 100
+var max = 10000000
 
 function getSq(n){
 	var s = 0
@@ -18,6 +18,7 @@ function setChain(n){
 	var ch = chains.get(n)
 	if (!ch) {
 		ch = setChain(getSq(n))
+		chains.set(n, ch)
 	}
 	return ch
 }
