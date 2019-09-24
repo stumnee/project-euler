@@ -89,7 +89,7 @@ println(paths(0,0))
 
 /**
 
-1074
+7273
 
 real    0m1.335s
 user    0m1.063s
