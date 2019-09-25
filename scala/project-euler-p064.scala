@@ -20,7 +20,7 @@ class Frac (var s: Int, var c: Int, var d: Int) {
     " ( %s + %s )/%s ".format(s,c,d)
   }
 
-  override def equals(that: Any) = {
+  override def equals(that: Any): Boolean = {
     that match {
       case that: Frac => {
         that.s == this.s &&
